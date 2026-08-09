@@ -1102,7 +1102,141 @@ a:hover {
 }
 
 /* ============================================================
-   21. FOOTER — Dark background
+   21. PAGINATION — Professional horizontal component
+   ============================================================ */
+.pagination {
+    display: flex;
+    justify-content: center;
+    margin-top: var(--spacing-xl);
+    width: 100%;
+}
+
+.pagination ul {
+    display: flex;
+    list-style: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: var(--spacing-xs);
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.pagination li {
+    display: inline-flex;
+    list-style: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+.pagination li a,
+.pagination li button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 40px;
+    height: 40px;
+    padding: 0 var(--spacing-md);
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius);
+    background: var(--surface-color);
+    color: var(--text-color);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    text-decoration: none;
+    transition: all var(--transition);
+    cursor: pointer;
+    font-family: var(--font-family);
+    line-height: 1;
+}
+
+.pagination li a:hover,
+.pagination li button:hover {
+    background: var(--primary-ultra-light);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.pagination li a:focus,
+.pagination li button:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.pagination li a.active,
+.pagination li button.active {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+    cursor: default;
+}
+
+.pagination li a.active:hover,
+.pagination li button.active:hover {
+    background: var(--primary-color);
+    border-color: var(--primary-color);
+    color: #fff;
+}
+
+.pagination li a.disabled,
+.pagination li button.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.pagination li a svg,
+.pagination li button svg {
+    display: block;
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+/* Pagination responsive — mobile */
+@media (max-width: 767px) {
+    .pagination ul {
+        gap: var(--spacing-xs);
+    }
+
+    .pagination li a,
+    .pagination li button {
+        min-width: 34px;
+        height: 34px;
+        padding: 0 var(--spacing-sm);
+        font-size: var(--font-size-xs);
+    }
+
+    .pagination li a svg,
+    .pagination li button svg {
+        width: 14px;
+        height: 14px;
+    }
+
+    .pagination li a.pagination-prev,
+    .pagination li a.pagination-next,
+    .pagination li button.pagination-prev,
+    .pagination li button.pagination-next {
+        padding: 0 var(--spacing-sm);
+        min-width: 34px;
+    }
+}
+
+/* Pagination responsive — tablet */
+@media (min-width: 768px) and (max-width: 1023px) {
+    .pagination ul {
+        gap: var(--spacing-sm);
+    }
+
+    .pagination li a,
+    .pagination li button {
+        min-width: 38px;
+        height: 38px;
+        padding: 0 var(--spacing-md);
+    }
+}
+
+/* ============================================================
+   22. FOOTER — Dark background
    ============================================================ */
 .site-footer {
     background: var(--footer-bg);
@@ -1240,7 +1374,7 @@ a:hover {
 }
 
 /* ============================================================
-   22. SCROLL REVEAL / FADE EFFECT
+   23. SCROLL REVEAL / FADE EFFECT
    ============================================================ */
 .section {
     opacity: 0;
@@ -1271,7 +1405,110 @@ a:hover {
 }
 
 /* ============================================================
-   23. RESPONSIVE — Mobile First
+   24. ARTICLE CONTENT PAGES
+   ============================================================ */
+.article-nav {
+    margin-bottom: var(--spacing-lg);
+}
+
+.article-content {
+    padding: var(--spacing-2xl);
+}
+
+.article-header {
+    margin-bottom: var(--spacing-xl);
+}
+
+.article-date {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: var(--font-size-sm);
+    color: var(--muted-text);
+    margin-bottom: var(--spacing-md);
+    font-weight: var(--font-weight-medium);
+}
+
+.article-title {
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    color: var(--text-color);
+    line-height: var(--line-height-heading);
+    margin-bottom: var(--spacing-sm);
+    letter-spacing: -0.02em;
+}
+
+.article-subtitle {
+    font-size: var(--font-size-lg);
+    color: var(--muted-text);
+    font-weight: var(--font-weight-normal);
+}
+
+.article-image {
+    margin: var(--spacing-xl) 0;
+    border: var(--border-width) solid var(--border-color);
+    border-radius: var(--border-radius);
+    overflow: hidden;
+}
+
+.article-image img {
+    width: 100%;
+    height: auto;
+    display: block;
+}
+
+.article-body {
+    max-width: 820px;
+    margin: 0 auto;
+}
+
+.article-body p {
+    margin-bottom: var(--spacing-lg);
+    text-align: justify;
+    text-justify: inter-word;
+    hyphens: auto;
+    word-break: break-word;
+}
+
+.article-body p:last-child {
+    margin-bottom: 0;
+}
+
+.article-footer {
+    margin-top: var(--spacing-xl);
+    padding-top: var(--spacing-lg);
+    border-top: var(--border-width) solid var(--border-color);
+}
+
+.article-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--spacing-lg);
+    font-size: var(--font-size-sm);
+    color: var(--muted-text);
+}
+
+.article-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+}
+
+.related-section {
+    margin-top: var(--spacing-2xl);
+    padding-top: var(--spacing-xl);
+    border-top: var(--border-width) solid var(--border-color);
+}
+
+.related-title {
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    color: var(--text-color);
+    margin-bottom: var(--spacing-lg);
+}
+
+/* ============================================================
+   25. RESPONSIVE — Mobile First
    ============================================================ */
 
 /* ---- Small phones and below ---- */
@@ -1330,6 +1567,14 @@ a:hover {
     .hero-slide {
         aspect-ratio: 16 / 9;
         min-height: 180px;
+    }
+
+    .article-content {
+        padding: var(--spacing-lg);
+    }
+
+    .article-title {
+        font-size: var(--font-size-3xl);
     }
 }
 
@@ -1432,6 +1677,23 @@ a:hover {
     .footer-grid {
         grid-template-columns: 1fr 1fr;
     }
+
+    .article-content {
+        padding: var(--spacing-lg);
+    }
+
+    .article-title {
+        font-size: var(--font-size-2xl);
+    }
+
+    .article-subtitle {
+        font-size: var(--font-size-md);
+    }
+
+    .article-meta {
+        gap: var(--spacing-md);
+        flex-direction: column;
+    }
 }
 
 /* ---- Tablets ---- */
@@ -1472,6 +1734,10 @@ a:hover {
 
     .header-search input {
         width: 140px;
+    }
+
+    .article-content {
+        padding: var(--spacing-xl);
     }
 }
 
@@ -1536,7 +1802,7 @@ a:hover {
 }
 
 /* ============================================================
-   24. UTILITIES
+   26. UTILITIES
    ============================================================ */
 .text-center {
     text-align: center;
@@ -1554,7 +1820,7 @@ a:hover {
 }
 
 /* ============================================================
-   25. PRINT STYLES
+   27. PRINT STYLES
    ============================================================ */
 @media print {
     .site-header,
