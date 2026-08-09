@@ -293,8 +293,6 @@
     // ============================================================
     // 7. HEADER SCROLL EFFECT (for transparency)
     // ============================================================
-    // The header already has a semi-transparent background with backdrop blur.
-    // We could add a small shadow on scroll for depth.
     const header = document.querySelector('.site-header');
     if (header) {
         let lastScrollY = window.scrollY;
@@ -314,8 +312,6 @@
     // ============================================================
     // 8. REDUCED MOTION PREFERENCE
     // ============================================================
-    // The CSS already handles prefers-reduced-motion for animations.
-    // We also stop auto-slide if user prefers reduced motion.
     const motionQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
     if (motionQuery.matches) {
         // Stop auto-slide if it exists
@@ -335,11 +331,258 @@
         }
     }
 
-    // Store interval reference for cleanup
-    // We'll attach to window so we can clear it if needed.
-    // Not perfect but works for this demo.
-    // In the slideshow code, we can assign to window.heroInterval.
-    // But we already have it in the closure. We'll just not do anything extra.
+    // ============================================================
+    // 9. DYNAMIC PAGINATION — Show 4 items per page
+    // ============================================================
+    function initPagination() {
+        const paginationContainers = document.querySelectorAll('.pagination');
+
+        paginationContainers.forEach(function(paginationNav) {
+            // Find the grid that is the sibling of this pagination nav
+            // Look for .grid, .grid-2, .grid-3, .gallery-grid, .committee-members-grid, etc.
+            let grid = paginationNav.previousElementSibling;
+            // If the grid is not directly the previous sibling, look for it in the parent
+            if (!grid || !grid.classList.contains('grid') && !grid.classList.contains('gallery-grid') && !grid.classList.contains('committee-members-grid')) {
+                // Try to find it in the parent container
+                const parentSection = paginationNav.closest('.section');
+                if (parentSection) {
+                    const grids = parentSection.querySelectorAll('.grid, .gallery-grid, .committee-members-grid');
+                    if (grids.length > 0) {
+                        grid = grids[0];
+                    }
+                }
+            }
+
+            // If no grid found, skip
+            if (!grid) {
+                console.warn('Pagination: No grid found for', paginationNav);
+                return;
+            }
+
+            // Get all direct children that are items (not the grid itself)
+            // For grid, we want all direct children that are article, figure, or div with class 'card'
+            let items = [];
+            const children = grid.children;
+            for (let i = 0; i < children.length; i++) {
+                const child = children[i];
+                // Skip if it's a hidden element or not a visible item
+                if (child.tagName === 'TEMPLATE' || child.tagName === 'SCRIPT') continue;
+                // Check if it has a class that indicates it's an item
+                if (child.classList.contains('card') || 
+                    child.classList.contains('gallery-item') || 
+                    child.classList.contains('update-card') || 
+                    child.classList.contains('event-card') || 
+                    child.classList.contains('member-card') ||
+                    child.classList.contains('doc-card') ||
+                    child.classList.contains('doc-item-card')) {
+                    items.push(child);
+                } else if (child.tagName === 'ARTICLE' || child.tagName === 'FIGURE' || child.tagName === 'DIV') {
+                    // Also include generic elements that might be items
+                    items.push(child);
+                }
+            }
+
+            // If no items found, try a different approach: get all children of the grid that are not empty
+            if (items.length === 0) {
+                for (let i = 0; i < children.length; i++) {
+                    const child = children[i];
+                    if (child.tagName !== 'TEMPLATE' && child.tagName !== 'SCRIPT') {
+                        items.push(child);
+                    }
+                }
+            }
+
+            const totalItems = items.length;
+            const itemsPerPage = 4;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+            // If no items or only 1 page, hide pagination
+            if (totalItems === 0 || totalPages <= 1) {
+                paginationNav.style.display = 'none';
+                // Show all items
+                items.forEach(function(item) {
+                    item.style.display = '';
+                });
+                return;
+            }
+
+            // Show pagination
+            paginationNav.style.display = 'flex';
+
+            let currentPage = 1;
+
+            // Generate pagination controls
+            function renderPagination() {
+                const ul = paginationNav.querySelector('ul');
+                if (!ul) return;
+
+                // Clear existing pagination items (keep only the ul)
+                while (ul.firstChild) {
+                    ul.removeChild(ul.firstChild);
+                }
+
+                // Previous button
+                const prevLi = document.createElement('li');
+                const prevBtn = document.createElement('button');
+                prevBtn.className = 'pagination-prev';
+                prevBtn.setAttribute('aria-label', 'Previous page');
+                prevBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                `;
+                if (currentPage === 1) {
+                    prevBtn.classList.add('disabled');
+                    prevBtn.disabled = true;
+                }
+                prevBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (currentPage > 1) {
+                        goToPage(currentPage - 1);
+                    }
+                });
+                prevLi.appendChild(prevBtn);
+                ul.appendChild(prevLi);
+
+                // Page numbers
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageLi = document.createElement('li');
+                    const pageBtn = document.createElement('button');
+                    pageBtn.textContent = i;
+                    pageBtn.setAttribute('aria-label', 'Page ' + i);
+                    if (i === currentPage) {
+                        pageBtn.classList.add('active');
+                        pageBtn.setAttribute('aria-current', 'page');
+                    }
+                    pageBtn.addEventListener('click', function(e) {
+                        e.preventDefault();
+                        if (i !== currentPage) {
+                            goToPage(i);
+                        }
+                    });
+                    pageLi.appendChild(pageBtn);
+                    ul.appendChild(pageLi);
+                }
+
+                // Next button
+                const nextLi = document.createElement('li');
+                const nextBtn = document.createElement('button');
+                nextBtn.className = 'pagination-next';
+                nextBtn.setAttribute('aria-label', 'Next page');
+                nextBtn.innerHTML = `
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                `;
+                if (currentPage === totalPages) {
+                    nextBtn.classList.add('disabled');
+                    nextBtn.disabled = true;
+                }
+                nextBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (currentPage < totalPages) {
+                        goToPage(currentPage + 1);
+                    }
+                });
+                nextLi.appendChild(nextBtn);
+                ul.appendChild(nextLi);
+            }
+
+            // Show items for a specific page
+            function showPage(page) {
+                const start = (page - 1) * itemsPerPage;
+                const end = Math.min(start + itemsPerPage, totalItems);
+
+                items.forEach(function(item, index) {
+                    if (index >= start && index < end) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+            }
+
+            // Go to a specific page
+            function goToPage(page) {
+                if (page < 1 || page > totalPages) return;
+                if (page === currentPage) return;
+                currentPage = page;
+                showPage(currentPage);
+                renderPagination();
+                // Scroll to the grid
+                grid.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // Initialize: show first page
+            showPage(1);
+            renderPagination();
+
+            // Watch for changes in the grid (MutationObserver)
+            // This allows adding/removing items dynamically
+            const observer = new MutationObserver(function(mutations) {
+                // Re-initialize pagination for this grid
+                // We need to re-fetch items because the DOM changed
+                // Instead of re-initializing the whole thing, we'll just re-run the pagination setup
+                // But to avoid infinite loops, we'll just re-init this specific pagination
+                // We'll use a simple approach: re-run the entire pagination setup for this nav
+                // But we need to be careful not to cause infinite loops.
+                // We'll use a flag to prevent recursion.
+                if (window._paginationUpdating) return;
+                window._paginationUpdating = true;
+                
+                // Re-init pagination for this nav
+                // We'll just call initPagination again, but we need to avoid re-initializing all paginations
+                // Instead, we'll re-initialize only this one.
+                // For simplicity, we'll re-run the entire initPagination function.
+                // But we need to clear the observer first to avoid infinite loops.
+                observer.disconnect();
+                
+                // Re-run pagination for all paginations
+                // This is a bit heavy but works for demo purposes
+                // In production, we'd want a more targeted approach
+                setTimeout(function() {
+                    // We need to re-run the pagination logic for this nav
+                    // We'll just re-run the entire function, but we need to avoid recursion
+                    // We'll use a flag to prevent recursion
+                    window._paginationUpdating = false;
+                    // Re-run pagination for all paginations
+                    // But we need to be careful to not cause an infinite loop.
+                    // We'll just re-init all paginations.
+                    initPagination();
+                }, 100);
+            });
+
+            // Start observing the grid for changes (child list changes)
+            observer.observe(grid, {
+                childList: true,
+                subtree: false
+            });
+
+            // Store the observer on the grid so we can clean up later if needed
+            grid._paginationObserver = observer;
+        });
+    }
+
+    // ============================================================
+    // 10. INITIALIZE PAGINATION ON DOM READY
+    // ============================================================
+    // Run pagination after DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function() {
+            initPagination();
+        });
+    } else {
+        initPagination();
+    }
+
+    // Also re-run pagination when window loads (to catch any late-loaded content)
+    window.addEventListener('load', function() {
+        // Re-run pagination to catch any dynamic content added after DOM ready
+        // But avoid re-running if already done
+        setTimeout(function() {
+            initPagination();
+        }, 500);
+    });
 
     console.log('Assam Limbu Mahasabha — script loaded.');
 })();
