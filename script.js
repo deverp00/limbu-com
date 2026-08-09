@@ -1,351 +1,431 @@
 /* ============================================================
-   script.js — Global JavaScript for Assam Limbu Mahasabha
-   Shared across all pages.
-   Includes: mobile toggle, dropdown navigation, search, scroll reveal,
-             active link highlighting, smooth scroll anchors.
+   script.js — Global JavaScript
+   Assam Limbu Mahasabha
+   Karbi Anglong & Dima Hasao District Committee
    ============================================================ */
 
-(function() {
-    'use strict';
+document.addEventListener('DOMContentLoaded', function () {
 
-    // ---------- DOM READY ----------
-    document.addEventListener('DOMContentLoaded', function() {
+    // ============================================================
+    // 1. MOBILE NAVIGATION TOGGLE
+    // ============================================================
+    const navToggle = document.querySelector('.nav-toggle');
+    const siteNav = document.querySelector('.site-nav');
 
-        // ============================================================
-        // 1. MOBILE NAVIGATION TOGGLE
-        // ============================================================
-        const toggleBtn = document.querySelector('.mobile-toggle');
-        const mobileNav = document.querySelector('.mobile-nav');
+    if (navToggle && siteNav) {
+        navToggle.addEventListener('click', function () {
+            const isExpanded = this.getAttribute('aria-expanded') === 'true';
+            this.setAttribute('aria-expanded', !isExpanded);
+            siteNav.classList.toggle('is-visible');
+        });
 
-        if (toggleBtn && mobileNav) {
-            toggleBtn.addEventListener('click', function() {
-                const expanded = this.getAttribute('aria-expanded') === 'true' ? false : true;
-                this.setAttribute('aria-expanded', expanded);
-                mobileNav.classList.toggle('open');
-                mobileNav.setAttribute('aria-hidden', !expanded);
-            });
-
-            // Close mobile nav on link click (better UX)
-            const mobileLinks = mobileNav.querySelectorAll('.mobile-nav-link');
-            mobileLinks.forEach(function(link) {
-                link.addEventListener('click', function() {
-                    toggleBtn.setAttribute('aria-expanded', 'false');
-                    mobileNav.classList.remove('open');
-                    mobileNav.setAttribute('aria-hidden', 'true');
-                });
-            });
-
-            // Close on outside click
-            document.addEventListener('click', function(e) {
-                const header = document.querySelector('.site-header');
-                if (header && !header.contains(e.target) && mobileNav.classList.contains('open')) {
-                    toggleBtn.setAttribute('aria-expanded', 'false');
-                    mobileNav.classList.remove('open');
-                    mobileNav.setAttribute('aria-hidden', 'true');
-                }
-            });
-        }
-
-        // ============================================================
-        // 2. DROPDOWN NAVIGATION
-        //    Desktop: hover to open
-        //    Mobile: click/tap to toggle
-        // ============================================================
-        const dropdownToggles = document.querySelectorAll('.dropdown-toggle');
-
-        // Detect touch device
-        const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-
-        dropdownToggles.forEach(function(toggle) {
-            const parentLi = toggle.closest('.dropdown');
-            if (!parentLi) return;
-
-            // For desktop: hover handling (only if not touch device)
-            if (!isTouchDevice) {
-                parentLi.addEventListener('mouseenter', function() {
-                    const menu = this.querySelector('.dropdown-menu');
-                    if (menu) {
-                        menu.style.display = 'block';
-                        menu.setAttribute('aria-hidden', 'false');
-                    }
-                });
-
-                parentLi.addEventListener('mouseleave', function() {
-                    const menu = this.querySelector('.dropdown-menu');
-                    if (menu) {
-                        menu.style.display = 'none';
-                        menu.setAttribute('aria-hidden', 'true');
-                    }
-                });
-            }
-
-            // For all devices: click/tap handling (mobile + desktop touch)
-            toggle.addEventListener('click', function(e) {
-                // Prevent default link behavior only if we are on mobile or touch device
-                if (isTouchDevice || window.innerWidth <= 768) {
-                    e.preventDefault();
-                    const menu = parentLi.querySelector('.dropdown-menu');
-                    if (menu) {
-                        const isOpen = menu.style.display === 'block';
-                        // Close all other dropdowns in the same nav
-                        const allMenus = parentLi.closest('.nav-list, .mobile-nav-list').querySelectorAll('.dropdown-menu');
-                        allMenus.forEach(function(m) {
-                            if (m !== menu) {
-                                m.style.display = 'none';
-                                m.setAttribute('aria-hidden', 'true');
-                            }
-                        });
-                        if (isOpen) {
-                            menu.style.display = 'none';
-                            menu.setAttribute('aria-hidden', 'true');
-                        } else {
-                            menu.style.display = 'block';
-                            menu.setAttribute('aria-hidden', 'false');
-                        }
-                    }
-                }
-            });
-
-            // Accessibility: close dropdowns on Escape key
-            toggle.addEventListener('keydown', function(e) {
-                if (e.key === 'Escape') {
-                    const menu = parentLi.querySelector('.dropdown-menu');
-                    if (menu && menu.style.display === 'block') {
-                        menu.style.display = 'none';
-                        menu.setAttribute('aria-hidden', 'true');
-                        toggle.focus();
-                    }
+        // Close nav when a link is clicked (optional, for better UX)
+        siteNav.querySelectorAll('a').forEach(function (link) {
+            link.addEventListener('click', function () {
+                if (window.innerWidth < 768) {
+                    navToggle.setAttribute('aria-expanded', 'false');
+                    siteNav.classList.remove('is-visible');
                 }
             });
         });
+    }
 
-        // Close dropdowns when clicking outside
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.dropdown')) {
-                document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
-                    menu.style.display = 'none';
-                    menu.setAttribute('aria-hidden', 'true');
-                });
+    // ============================================================
+    // 2. DROPDOWN MENUS (nested)
+    // ============================================================
+    const dropdownTriggers = document.querySelectorAll('.nav-dropdown-trigger');
+
+    dropdownTriggers.forEach(function (trigger) {
+        const parentLi = trigger.closest('.nav-item-has-dropdown');
+        if (!parentLi) return;
+
+        const dropdown = parentLi.querySelector('.nav-dropdown');
+
+        // Toggle on click
+        trigger.addEventListener('click', function (e) {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const isOpen = this.getAttribute('aria-expanded') === 'true';
+            // Close all other dropdowns (optional)
+            document.querySelectorAll('.nav-dropdown-trigger').forEach(function (otherTrigger) {
+                if (otherTrigger !== trigger) {
+                    otherTrigger.setAttribute('aria-expanded', 'false');
+                    const otherDropdown = otherTrigger.closest('.nav-item-has-dropdown').querySelector('.nav-dropdown');
+                    if (otherDropdown) otherDropdown.classList.remove('is-visible');
+                }
+            });
+
+            this.setAttribute('aria-expanded', !isOpen);
+            dropdown.classList.toggle('is-visible');
+        });
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function (e) {
+            if (!parentLi.contains(e.target)) {
+                trigger.setAttribute('aria-expanded', 'false');
+                dropdown.classList.remove('is-visible');
             }
         });
 
-        // On window resize, reset dropdown display for desktop if needed
-        let resizeTimer;
-        window.addEventListener('resize', function() {
-            clearTimeout(resizeTimer);
-            resizeTimer = setTimeout(function() {
-                if (window.innerWidth > 768) {
-                    document.querySelectorAll('.dropdown-menu').forEach(function(menu) {
-                        if (!isTouchDevice) {
-                            menu.style.display = 'none';
-                            menu.setAttribute('aria-hidden', 'true');
-                        }
-                    });
-                }
-            }, 200);
-        });
+        // Handle touch devices: prevent double-tap issues
+        trigger.addEventListener('touchstart', function (e) {
+            // Just let click handle it
+        }, { passive: true });
+    });
 
-        // ============================================================
-        // 3. SEARCH / FILTER SYSTEM
-        // ============================================================
-        const searchInputs = document.querySelectorAll('.search-input');
-        const SEARCH_DELAY = 300;
-        let searchTimeout = null;
+    // For desktop: hover to open dropdown (optional, but we'll keep click only for consistency)
 
-        function getSearchableItems() {
-            const main = document.querySelector('main');
-            if (!main) return [];
+    // ============================================================
+    // 3. HERO SLIDESHOW (auto-scroll with indicators)
+    // ============================================================
+    const heroTrack = document.getElementById('heroTrack');
+    const indicatorsContainer = document.getElementById('heroIndicators');
 
-            const selectors = [
-                '.update-card', '.event-card', '.committee-highlight-card',
-                '.document-card', '.contact-info-card', '.stat-card',
-                '.intro-text p', '.hero-description', '.section-subtitle',
-                '.update-title', '.event-title', '.highlight-name', '.highlight-desc',
-                '.document-title', '.document-desc', '.contact-value', '.cta-description'
-            ];
-            let items = [];
-            selectors.forEach(function(sel) {
-                document.querySelectorAll(sel).forEach(function(el) {
-                    items.push(el);
-                });
-            });
-            document.querySelectorAll('.section, .hero-section, .membership-cta-section').forEach(function(el) {
-                items.push(el);
-            });
-            return items;
+    if (heroTrack && indicatorsContainer) {
+        const slides = heroTrack.querySelectorAll('.hero-slide');
+        const totalSlides = slides.length;
+        let currentIndex = 0;
+        let autoPlayInterval = null;
+        const intervalTime = 5000; // 5 seconds
+
+        // Create indicator dots if not already present
+        const dots = indicatorsContainer.querySelectorAll('.indicator-dot');
+        if (dots.length === 0) {
+            for (let i = 0; i < totalSlides; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'indicator-dot';
+                dot.setAttribute('data-index', i);
+                dot.setAttribute('aria-label', 'Slide ' + (i + 1));
+                if (i === 0) dot.classList.add('active');
+                indicatorsContainer.appendChild(dot);
+            }
         }
 
-        function performSearch(query) {
-            const trimmed = query.trim().toLowerCase();
-            const items = getSearchableItems();
+        // Update dots and slide position
+        function goToSlide(index) {
+            if (index < 0) index = totalSlides - 1;
+            if (index >= totalSlides) index = 0;
+            currentIndex = index;
 
-            if (trimmed === '') {
-                items.forEach(function(item) {
-                    item.style.display = '';
-                    if (item.classList.contains('section') || item.classList.contains('hero-section') || item.classList.contains('membership-cta-section')) {
-                        const children = item.querySelectorAll('.update-card, .event-card, .committee-highlight-card, .document-card, .contact-info-card, .stat-card');
-                        children.forEach(function(child) {
-                            child.style.display = '';
-                        });
-                    }
+            // Update track transform
+            heroTrack.style.transform = 'translateX(-' + (index * 100) + '%)';
+
+            // Update dots
+            const allDots = indicatorsContainer.querySelectorAll('.indicator-dot');
+            allDots.forEach(function (dot, i) {
+                dot.classList.toggle('active', i === index);
+            });
+        }
+
+        // Next slide
+        function nextSlide() {
+            goToSlide(currentIndex + 1);
+        }
+
+        // Start autoplay
+        function startAutoPlay() {
+            if (autoPlayInterval) clearInterval(autoPlayInterval);
+            autoPlayInterval = setInterval(nextSlide, intervalTime);
+        }
+
+        // Stop autoplay
+        function stopAutoPlay() {
+            if (autoPlayInterval) {
+                clearInterval(autoPlayInterval);
+                autoPlayInterval = null;
+            }
+        }
+
+        // Click on indicators
+        indicatorsContainer.addEventListener('click', function (e) {
+            const dot = e.target.closest('.indicator-dot');
+            if (!dot) return;
+            const index = parseInt(dot.getAttribute('data-index'), 10);
+            if (!isNaN(index)) {
+                stopAutoPlay();
+                goToSlide(index);
+                startAutoPlay(); // restart after manual interaction
+            }
+        });
+
+        // Pause on hover (optional)
+        heroTrack.parentElement.addEventListener('mouseenter', stopAutoPlay);
+        heroTrack.parentElement.addEventListener('mouseleave', startAutoPlay);
+
+        // Initialize
+        goToSlide(0);
+        startAutoPlay();
+
+        // Handle window resize: ensure track width is correct (no extra action needed)
+        // Also handle reduced motion: stop autoplay if user prefers reduced motion
+        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (prefersReducedMotion.matches) {
+            stopAutoPlay();
+        }
+        prefersReducedMotion.addEventListener('change', function () {
+            if (this.matches) {
+                stopAutoPlay();
+            } else {
+                startAutoPlay();
+            }
+        });
+    }
+
+    // ============================================================
+    // 4. SCROLL REVEAL (Intersection Observer)
+    // ============================================================
+    const revealElements = document.querySelectorAll('.reveal');
+
+    if (revealElements.length > 0) {
+        const observer = new IntersectionObserver(function (entries) {
+            entries.forEach(function (entry) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('is-visible');
+                    // Optionally unobserve after reveal to improve performance
+                    // observer.unobserve(entry.target);
+                } else {
+                    // Optional: remove class when out of view (for subtle fade-out)
+                    // entry.target.classList.remove('is-visible');
+                }
+            });
+        }, {
+            threshold: 0.1,
+            rootMargin: '0px 0px -20px 0px'
+        });
+
+        revealElements.forEach(function (el) {
+            observer.observe(el);
+        });
+
+        // For reduced motion: immediately show all
+        const prefersReducedMotionReveal = window.matchMedia('(prefers-reduced-motion: reduce)');
+        if (prefersReducedMotionReveal.matches) {
+            revealElements.forEach(function (el) {
+                el.classList.add('is-visible');
+            });
+        }
+        prefersReducedMotionReveal.addEventListener('change', function () {
+            if (this.matches) {
+                revealElements.forEach(function (el) {
+                    el.classList.add('is-visible');
                 });
+            } else {
+                // Optionally reset, but we keep them visible if already revealed
+            }
+        });
+    }
+
+    // ============================================================
+    // 5. SEARCH FUNCTIONALITY (client-side filtering)
+    // ============================================================
+    const searchForms = document.querySelectorAll('.header-search');
+
+    searchForms.forEach(function (form) {
+        const input = form.querySelector('input[type="search"]');
+        if (!input) return;
+
+        form.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const query = input.value.trim().toLowerCase();
+            if (query === '') {
+                // Optionally clear filters or show all
+                clearFilters();
                 return;
             }
-
-            const containers = [];
-            document.querySelectorAll('.update-card, .event-card, .committee-highlight-card, .document-card, .contact-info-card, .stat-card').forEach(function(el) {
-                containers.push(el);
-            });
-            document.querySelectorAll('.section, .hero-section, .membership-cta-section').forEach(function(el) {
-                containers.push(el);
-            });
-
-            const matchingItems = new Set();
-
-            containers.forEach(function(container) {
-                const text = container.textContent.toLowerCase();
-                if (text.includes(trimmed)) {
-                    matchingItems.add(container);
-                }
-            });
-
-            containers.forEach(function(container) {
-                if (matchingItems.has(container)) {
-                    container.style.display = '';
-                } else {
-                    container.style.display = 'none';
-                }
-            });
-
-            document.querySelectorAll('.update-card, .event-card, .committee-highlight-card, .document-card, .contact-info-card, .stat-card').forEach(function(card) {
-                const parent = card.closest('.section') || card.closest('.hero-section') || card.closest('.membership-cta-section');
-                if (parent) {
-                    card.style.display = '';
-                } else {
-                    card.style.display = '';
-                }
-            });
-        }
-
-        searchInputs.forEach(function(input) {
-            input.addEventListener('input', function(e) {
-                clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(function() {
-                    performSearch(e.target.value);
-                }, SEARCH_DELAY);
-            });
-
-            input.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter') {
-                    clearTimeout(searchTimeout);
-                    performSearch(e.target.value);
-                }
-            });
+            performSearch(query);
         });
 
-        // ============================================================
-        // 4. SCROLL REVEAL (Intersection Observer)
-        // ============================================================
-        const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // Optional: live search on input with debounce
+        let debounceTimer;
+        input.addEventListener('input', function () {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(function () {
+                const query = input.value.trim().toLowerCase();
+                if (query === '') {
+                    clearFilters();
+                } else {
+                    performSearch(query);
+                }
+            }, 300);
+        });
+    });
 
-        if (!prefersReducedMotion) {
-            const revealElements = document.querySelectorAll(
-                '.section, .hero-section, .membership-cta-section, ' +
-                '.update-card, .event-card, .committee-highlight-card, ' +
-                '.document-card, .contact-info-card, .stat-card, ' +
-                '.intro-grid, .gallery-preview-item, .gallery-item'
-            );
+    // Generic search function: looks for items with data-search or filters cards, list items, etc.
+    function performSearch(query) {
+        // Find all searchable items: we'll target .card, .update-card, .event-card, .doc-card, .gallery-item, etc.
+        // We'll use a data attribute or text content.
+        const searchableItems = document.querySelectorAll('.card, .update-card, .event-card, .doc-card, .gallery-item, .committee-highlight-card, .membership-item, .contact-item');
+        let found = false;
 
-            revealElements.forEach(function(el) {
-                if (!el.classList.contains('reveal')) {
-                    el.classList.add('reveal');
+        searchableItems.forEach(function (item) {
+            const text = item.textContent.toLowerCase();
+            const match = text.includes(query);
+            // If it's a card, we also need to show/hide its parent container if needed
+            // We'll simply toggle a class to hide
+            if (match) {
+                item.style.display = ''; // show
+                found = true;
+            } else {
+                item.style.display = 'none';
+            }
+        });
+
+        // Also handle grid containers: ensure that if all items hidden, maybe show a message
+        const grids = document.querySelectorAll('.grid, .membership-info, .contact-grid');
+        grids.forEach(function (grid) {
+            const visibleItems = grid.querySelectorAll('.card, .update-card, .event-card, .doc-card, .gallery-item, .committee-highlight-card, .membership-item, .contact-item');
+            let anyVisible = false;
+            visibleItems.forEach(function (item) {
+                if (item.style.display !== 'none') {
+                    anyVisible = true;
                 }
             });
+            // Optionally show a "no results" message if none visible
+            let noResultsMsg = grid.querySelector('.no-results');
+            if (!anyVisible) {
+                if (!noResultsMsg) {
+                    noResultsMsg = document.createElement('p');
+                    noResultsMsg.className = 'no-results';
+                    noResultsMsg.textContent = 'No results found.';
+                    grid.appendChild(noResultsMsg);
+                }
+                noResultsMsg.style.display = 'block';
+            } else {
+                if (noResultsMsg) {
+                    noResultsMsg.style.display = 'none';
+                }
+            }
+        });
+    }
 
-            const observer = new IntersectionObserver(function(entries) {
-                entries.forEach(function(entry) {
-                    if (entry.isIntersecting) {
-                        entry.target.classList.add('visible');
-                        observer.unobserve(entry.target);
+    function clearFilters() {
+        const searchableItems = document.querySelectorAll('.card, .update-card, .event-card, .doc-card, .gallery-item, .committee-highlight-card, .membership-item, .contact-item');
+        searchableItems.forEach(function (item) {
+            item.style.display = '';
+        });
+        // Remove no-results messages
+        document.querySelectorAll('.no-results').forEach(function (el) {
+            el.style.display = 'none';
+        });
+    }
+
+    // ============================================================
+    // 6. PAGINATION (for updates page and others with .pagination)
+    // ============================================================
+    // We'll implement a simple pagination for any container with .pagination and .pagination-items
+    // The structure: .pagination-container with items (e.g., cards) and .pagination-controls
+    // We'll show first 6 items per page, and controls.
+
+    function initPagination() {
+        const containers = document.querySelectorAll('.pagination-container');
+        containers.forEach(function (container) {
+            const items = container.querySelectorAll('.pagination-item');
+            if (items.length === 0) return;
+
+            const perPage = 6;
+            const totalPages = Math.ceil(items.length / perPage);
+            let currentPage = 1;
+
+            // Create controls if not present
+            let controls = container.querySelector('.pagination-controls');
+            if (!controls) {
+                controls = document.createElement('div');
+                controls.className = 'pagination-controls';
+                controls.style.marginTop = '1.5rem';
+                controls.style.display = 'flex';
+                controls.style.justifyContent = 'center';
+                controls.style.gap = '0.5rem';
+                container.appendChild(controls);
+            }
+
+            // Function to render page
+            function renderPage(page) {
+                currentPage = page;
+                const start = (page - 1) * perPage;
+                const end = start + perPage;
+
+                items.forEach(function (item, index) {
+                    if (index >= start && index < end) {
+                        item.style.display = '';
+                    } else {
+                        item.style.display = 'none';
                     }
                 });
-            }, {
-                threshold: 0.10,
-                rootMargin: '0px 0px -30px 0px'
-            });
 
-            document.querySelectorAll('.reveal').forEach(function(el) {
-                observer.observe(el);
-            });
-        } else {
-            const style = document.createElement('style');
-            style.textContent = '.reveal { opacity: 1 !important; transform: translateY(0) !important; transition: none !important; }';
-            document.head.appendChild(style);
-        }
-
-        // ============================================================
-        // 5. ACTIVE NAV LINK HIGHLIGHTING
-        //    (relative path support, without leading slash)
-        // ============================================================
-        const currentPath = window.location.pathname;
-        const navLinks = document.querySelectorAll('.nav-link, .mobile-nav-link');
-
-        navLinks.forEach(function(link) {
-            const href = link.getAttribute('href');
-            if (!href) return;
-
-            // Normalize current path: remove leading slash if present
-            let current = currentPath;
-            if (current.startsWith('/')) {
-                current = current.substring(1);
+                // Update controls
+                renderControls();
             }
-            if (current === '') current = 'index.html';
 
-            // For root index.html
-            if (href === 'index.html' || href === '') {
-                if (current === 'index.html' || current === '') {
-                    link.classList.add('active');
-                }
-            } else {
-                // Check if current path ends with the href
-                if (current.endsWith(href) || current === href) {
-                    link.classList.add('active');
-                }
-                // Also handle case where href is like 'about/about.html' and current is 'about/about.html'
-                const lastPart = current.split('/').pop();
-                if (lastPart && href.endsWith(lastPart)) {
-                    link.classList.add('active');
-                }
-                // If href is a directory path (e.g., 'about/'), check if current starts with it
-                if (href.endsWith('/') && current.startsWith(href)) {
-                    link.classList.add('active');
-                }
-            }
-        });
+            function renderControls() {
+                controls.innerHTML = '';
+                // Previous button
+                const prevBtn = document.createElement('button');
+                prevBtn.textContent = 'Previous';
+                prevBtn.className = 'btn btn-outline';
+                prevBtn.disabled = currentPage === 1;
+                prevBtn.addEventListener('click', function () {
+                    if (currentPage > 1) renderPage(currentPage - 1);
+                });
+                controls.appendChild(prevBtn);
 
-        // ============================================================
-        // 6. SMOOTH SCROLL FOR ANCHOR LINKS
-        // ============================================================
-        document.querySelectorAll('a[href^="#"]').forEach(function(anchor) {
-            anchor.addEventListener('click', function(e) {
-                const targetId = this.getAttribute('href');
-                if (targetId === '#') return;
-                const targetEl = document.querySelector(targetId);
-                if (targetEl) {
-                    e.preventDefault();
-                    const headerOffset = 80;
-                    const elementPosition = targetEl.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
+                // Page numbers
+                for (let i = 1; i <= totalPages; i++) {
+                    const pageBtn = document.createElement('button');
+                    pageBtn.textContent = i;
+                    pageBtn.className = 'btn btn-outline';
+                    if (i === currentPage) {
+                        pageBtn.classList.add('btn-primary');
+                    }
+                    pageBtn.addEventListener('click', function () {
+                        renderPage(i);
                     });
+                    controls.appendChild(pageBtn);
                 }
-            });
+
+                // Next button
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = 'Next';
+                nextBtn.className = 'btn btn-outline';
+                nextBtn.disabled = currentPage === totalPages;
+                nextBtn.addEventListener('click', function () {
+                    if (currentPage < totalPages) renderPage(currentPage + 1);
+                });
+                controls.appendChild(nextBtn);
+            }
+
+            // Initial render
+            renderPage(1);
         });
+    }
 
-        console.log('Assam Limbu Mahasabha — global script initialized.');
+    // Call pagination init (will work on updates page)
+    initPagination();
 
-    }); // end DOMContentLoaded
+    // ============================================================
+    // 7. ADDITIONAL: Smooth anchor scrolling (if any internal links)
+    // ============================================================
+    document.querySelectorAll('a[href^="#"]').forEach(function (anchor) {
+        anchor.addEventListener('click', function (e) {
+            const href = this.getAttribute('href');
+            if (href === '#') return;
+            const targetId = href.substring(1);
+            const targetElement = document.getElementById(targetId);
+            if (targetElement) {
+                e.preventDefault();
+                const offset = 80; // header height offset
+                const targetPosition = targetElement.getBoundingClientRect().top + window.pageYOffset - offset;
+                window.scrollTo({ top: targetPosition, behavior: 'smooth' });
+            }
+        });
+    });
 
-})();
+    // ============================================================
+    // 8. INITIALIZATION: Show all items if search is cleared on page load
+    // ============================================================
+    clearFilters(); // ensure no hidden items initially
+
+    // Also, for any cards that might have been hidden by pagination, we already handle
+
+    console.log('Assam Limbu Mahasabha — script loaded.');
+});
